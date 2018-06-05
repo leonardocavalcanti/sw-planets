@@ -57,7 +57,7 @@ public class PlanetsServiceImpl implements PlanetsService {
      */
     @Override
     public Planet create(Planet create) {
-        Assert.isNull(repository.findByName(create.name), "Planet already exists");
+        Assert.isTrue(!repository.findByName(create.name).iterator().hasNext(), "Planet already exists");
 
         // Getting next entry id
         CustomSequence counter = mongo.findAndModify(

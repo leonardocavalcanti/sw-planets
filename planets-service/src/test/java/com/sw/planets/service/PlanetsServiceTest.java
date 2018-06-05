@@ -41,6 +41,8 @@ public class PlanetsServiceTest {
         planet.climate = "climate";
         planet.terrain = "terrain";
 
+        when(repository.findByName(planet.name)).thenReturn(new ArrayList<>());
+
         when(mongo.findAndModify((Query) notNull(), (Update) notNull(), (FindAndModifyOptions) notNull(), any())).thenReturn(new CustomSequence());
 
         planetService.create(planet);
@@ -50,12 +52,12 @@ public class PlanetsServiceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldFailWhenPlanetAlreadyExists() {
-        Planet planet = new Planet();
-        planet.name = "name";
+        ArrayList<Planet> planets = new ArrayList<>();
+        planets.add(getStubPlanet());
 
-        when(repository.findByName(planet.name)).thenReturn(new ArrayList<>());
+        when(repository.findByName(getStubPlanet().name)).thenReturn(planets);
 
-        planetService.create(planet);
+        planetService.create(getStubPlanet());
     }
 
     @Test

@@ -14,7 +14,7 @@ public class PlanetsController {
 	private PlanetsService planetsService;
 
 	@RequestMapping(path = "/", method = RequestMethod.GET)
-	public Iterable<Planet> find(@RequestParam String name) {
+	public Iterable<Planet> find(@RequestParam(required = false) String name) {
 		return planetsService.find(name);
 	}
 

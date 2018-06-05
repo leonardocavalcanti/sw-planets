@@ -8,7 +8,7 @@ spring:
 
   data:
     mongodb:
-      host: localhost
+      host: sw-planets-mongodb
       username: user
       password: ${MONGODB_PASSWORD}
       database: sw-service
@@ -17,3 +17,15 @@ spring:
 server:
   context-path: /planets
   port: 80
+
+---
+spring:
+  profiles: development
+  data:
+    mongodb:
+      host: localhost
+      username: user
+      password: ${MONGODB_PASSWORD}
+      database: sw-service
+      port: 27017
+

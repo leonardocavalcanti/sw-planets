@@ -1,0 +1,5 @@
+spring:
+  data:
+    mongodb:
+      database: sw-service
+      port: 0

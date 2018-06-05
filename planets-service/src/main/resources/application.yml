@@ -1,0 +1,19 @@
+logging:
+  level:
+    org.springframework.security: INFO
+
+spring:
+  application:
+    name: planets-service
+
+  data:
+    mongodb:
+      host: localhost
+      username: user
+      password: ${MONGODB_PASSWORD}
+      database: sw-service
+      port: 27017
+
+server:
+  context-path: /planets
+  port: 80

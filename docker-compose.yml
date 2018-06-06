@@ -5,6 +5,8 @@ services:
       MONGODB_PASSWORD: $MONGODB_PASSWORD
     image: leocavalcanti/sw-planets-service
     restart: always
+    ports:
+      - 80:80
     logging:
       options:
         max-size: "10m"

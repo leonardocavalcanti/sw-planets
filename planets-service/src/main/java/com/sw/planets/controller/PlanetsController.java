@@ -3,6 +3,7 @@ package com.sw.planets.controller;
 import com.sw.planets.domain.Planet;
 import com.sw.planets.service.PlanetsService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -24,11 +25,13 @@ public class PlanetsController {
 	}
 
 	@RequestMapping(path = "/", method = RequestMethod.POST)
-	public Planet create(@Valid @RequestBody Planet planet) {
-		return planetsService.create(planet);
+	@ResponseStatus(HttpStatus.CREATED)
+	public void create(@Valid @RequestBody Planet planet) {
+		planetsService.create(planet);
 	}
 
 	@RequestMapping(path = "/{id}", method = RequestMethod.PUT)
+	@ResponseStatus(HttpStatus.ACCEPTED)
 	public void update(@PathVariable Integer id, @Valid @RequestBody Planet planet) {
 		planetsService.update(id, planet);
 	}

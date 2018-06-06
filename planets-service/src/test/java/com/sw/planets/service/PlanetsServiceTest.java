@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
 
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -21,7 +22,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class PlanetsServiceTest {
 
     @InjectMocks
-    private PlanetsServiceImpl planetService;
+    private PlanetsService planetService;
 
     @Mock
     private PlanetRepository repository;
@@ -93,7 +94,7 @@ public class PlanetsServiceTest {
 
         Planet planet = getStubPlanet();
 
-        Assert.isTrue(result.iterator().next().name.equals(planet.name));
+        Assert.isTrue(result.iterator().next().name.equals(planet.name), "Test failed");
     }
 
     @Test
@@ -107,7 +108,7 @@ public class PlanetsServiceTest {
 
         Planet planet = getStubPlanet();
 
-        Assert.isTrue(result.iterator().next().name.equals(planet.name));
+        Assert.isTrue(result.iterator().next().name.equals(planet.name), "Test failed");
     }
 
     @Test
@@ -116,7 +117,14 @@ public class PlanetsServiceTest {
 
         when(repository.findOne(planet.id)).thenReturn(planet);
 
-        Assert.isTrue(planetService.findOne(planet.id).name.equals(planet.name));
+        Assert.isTrue(planetService.findOne(planet.id).name.equals(planet.name), "Test failed");
+    }
+
+    @Test
+    public void shouldGetMovieAppearances() throws ExecutionException, InterruptedException {
+        Planet planet = getStubPlanet();
+
+        Assert.isTrue(planetService.getMovieAppearances(planet).get(), "Test failed");
     }
 
     private Planet getStubPlanet() {

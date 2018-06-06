@@ -1,42 +1,170 @@
 package com.sw.planets.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sw.planets.domain.CustomSequence;
 import com.sw.planets.domain.Planet;
+import com.sw.planets.repository.PlanetRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.MongoOperations;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+import org.springframework.web.client.RestTemplate;
 
-public interface PlanetsService {
+import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
-	/**
-	 * Find all planets or planet by name
-	 *
-	 * @return planets list
-	 */
-	Iterable<Planet> find(String name);
+import static org.springframework.data.mongodb.core.FindAndModifyOptions.options;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
-	/**
-	 * Find one planet by id
-	 *
-	 * @return planet
-	 */
-	Planet findOne(Integer id);
+@Service
+public class PlanetsService {
 
-	/**
-	 * Creates new planets with default parameters
-	 *
-	 * @param create
-	 * @return created planets
-	 */
-	Planet create(Planet create);
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
-	/**
-	 * Validates and applies incoming planets updates
-	 *
-	 * @param update
-	 */
-	void update(Integer id, Planet update);
+    @Autowired
+    private PlanetRepository repository;
 
-	/**
-	 * Validates and deletes planets by id
-	 *
-	 * @param id
-	 */
-	void delete(Integer id);
+    @Autowired
+    private MongoOperations mongo;
+
+    /**
+     * Find all planets or planet by name
+     *
+     * @return planets list
+     */
+    public Iterable<Planet> find(String name) {
+        if (name != null) {
+            return repository.findByName(name);
+        }
+
+        return repository.findAll();
+    }
+
+    /**
+     * Find one planet by id
+     *
+     * @return planet
+     */
+    public Planet findOne(Integer id) {
+        return repository.findOne(id);
+    }
+
+    /**
+     * Creates a new planet with default parameters
+     *
+     * @param create
+     * @return created planets
+     */
+    public Planet create(Planet create) {
+        Assert.isTrue(!repository.findByName(create.name).iterator().hasNext(), "Planet already exists");
+
+        // Getting next entry id
+        CustomSequence counter = mongo.findAndModify(
+                query(where("_id").is("customSequences")),
+                new Update().inc("seq", 1),
+                options().returnNew(true).upsert(true),
+                CustomSequence.class);
+
+        create.id = counter.seq;
+
+        create.status = "Obtaining movie appearances for planet";
+
+        repository.save(create);
+
+        log.info("New planet has been created: " + create.name);
+
+        getMovieAppearances(create);
+
+        return create;
+    }
+
+    /**
+     * Validates and applies incoming planets updates
+     *
+     * @param update
+     */
+    public void update(Integer id, Planet update) {
+        Planet planet = repository.findOne(id);
+
+        Assert.notNull(planet, "Planet not found");
+
+        planet.name = update.name;
+        planet.climate = update.climate;
+        planet.terrain = update.terrain;
+
+        repository.save(planet);
+
+        log.debug("Planet {} changes has been saved", update.name);
+    }
+
+    /**
+     * Validates and deletes planets by id
+     *
+     * @param id
+     */
+    public void delete(Integer id) {
+        Planet planet = repository.findOne(id);
+
+        Assert.notNull(planet, "Planet not found");
+
+        repository.delete(planet);
+
+        log.debug("Planet {} changes has been deleted", planet.name);
+    }
+
+    Future<Boolean> getMovieAppearances(Planet create) {
+        CompletableFuture<Boolean> future = CompletableFuture.supplyAsync(() -> {
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+
+                HttpHeaders headers = new HttpHeaders();
+                headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+                headers.add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.99 Safari/537.36");
+
+                HttpEntity<String> entity = new HttpEntity<String>("parameters", headers);
+
+                ResponseEntity<String> response = restTemplate.exchange("https://swapi.co/api/planets/?search=" + create.name, HttpMethod.GET, entity, String.class);
+
+                if (response.getStatusCode().equals(HttpStatus.OK)) {
+                    ObjectMapper mapper = new ObjectMapper();
+                    JsonNode root = mapper.readTree(response.getBody());
+
+                    if (root.path("count").asInt() > 1) {
+                        log.info("Found too many results while trying to get movie appearances for planet: " + create.name);
+                    } else if (root.path("count").asInt() == 0) {
+                        log.info("No results for planet " + create.name + " on SWAPI");
+
+                        create.movieAppearances = 0;
+                    } else {
+                        create.movieAppearances = root.findPath("films").size();
+                    }
+
+                    create.status = "Final";
+
+                    repository.save(create);
+
+                    return true;
+                }
+            } catch (Exception e) {
+                log.info("Exception while trying to get movie appearances for planet " + create.name + ": " + e.getMessage());
+
+                e.printStackTrace();
+            }
+
+            create.status = "Unable to obtain movie appearances for planet";
+
+            repository.save(create);
+
+            return true;
+        });
+
+        return future;
+    }
 }

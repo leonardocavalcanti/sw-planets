@@ -1,0 +1,11 @@
+version: '2.1'
+services:
+  sw-planets-service:
+    build: planets-service
+    ports:
+      - 80:80
+
+  sw-planets-mongodb:
+    build: mongodb
+    ports:
+      - 25000:27017

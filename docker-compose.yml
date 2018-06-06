@@ -1,0 +1,21 @@
+version: '2.1'
+services:
+  sw-planets-service:
+    environment:
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: leocavalcanti/sw-planets-service
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  sw-planets-mongodb:
+    environment:
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: leocavalcanti/sw-planets-mongodb
+    restart: always
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"

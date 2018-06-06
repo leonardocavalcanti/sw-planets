@@ -56,7 +56,7 @@ public class PlanetsControllerTest {
         String json = mapper.writeValueAsString(planet);
 
         mockMvc.perform(post("/").contentType(MediaType.APPLICATION_JSON).content(json))
-                .andExpect(status().isOk());
+                .andExpect(status().isCreated());
     }
 
     @Test
@@ -77,7 +77,7 @@ public class PlanetsControllerTest {
         when(planetsService.findOne(planet.id)).thenReturn(planet);
 
         mockMvc.perform(put("/" + planet.id).contentType(MediaType.APPLICATION_JSON).content(json))
-                .andExpect(status().isOk());
+                .andExpect(status().isAccepted());
     }
 
     @Test

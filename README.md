@@ -1,6 +1,6 @@
 # sw-planets
 
-This is a simple REST API that consists of a Spring Boot microservice, in addition to a MongoDB database. The goal is to store planets from the Star Wars franchise and also inform the number of appearances of this planets in the movies.
+This is a simple REST API that consists of a Spring Boot application, in addition to a MongoDB database. The goal is to store planets from the Star Wars franchise and also inform the number of appearances of this planets in the movies.
 
 There's a final version published at [GoogleCloud (using Docker containers on Kubernetes)](http://sw.leonardocavalcanti.com/planets).
 
